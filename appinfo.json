@@ -1,0 +1,196 @@
+{
+    "appKeys": {
+        "KEY_TEMPERATURE": 0,
+        "KEY_TEMP_UNIT": 1,
+        "KEY_CONDITIONS": 2
+    },
+    "capabilities": [
+        "location"
+    ],
+    "companyName": "spadini.davide@gmail.com",
+    "longName": "Isometric",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/right9.png",
+                "name": "IMAGE_RIGHT9",
+                "type": "png"
+            },
+            {
+                "file": "images/right8.png",
+                "name": "IMAGE_RIGHT8",
+                "type": "png"
+            },
+            {
+                "file": "images/right7.png",
+                "name": "IMAGE_RIGHT7",
+                "type": "png"
+            },
+            {
+                "file": "images/right6.png",
+                "name": "IMAGE_RIGHT6",
+                "type": "png"
+            },
+            {
+                "file": "images/right5.png",
+                "name": "IMAGE_RIGHT5",
+                "type": "png"
+            },
+            {
+                "file": "images/right4.png",
+                "name": "IMAGE_RIGHT4",
+                "type": "png"
+            },
+            {
+                "file": "images/right3.png",
+                "name": "IMAGE_RIGHT3",
+                "type": "png"
+            },
+            {
+                "file": "images/right2.png",
+                "name": "IMAGE_RIGHT2",
+                "type": "png"
+            },
+            {
+                "file": "images/right1.png",
+                "name": "IMAGE_RIGHT1",
+                "type": "png"
+            },
+            {
+                "file": "images/right0.png",
+                "name": "IMAGE_RIGHT0",
+                "type": "png"
+            },
+            {
+                "file": "images/left9.png",
+                "name": "IMAGE_LEFT9",
+                "type": "png"
+            },
+            {
+                "file": "images/left8.png",
+                "name": "IMAGE_LEFT8",
+                "type": "png"
+            },
+            {
+                "file": "images/left7.png",
+                "name": "IMAGE_LEFT7",
+                "type": "png"
+            },
+            {
+                "file": "images/left6.png",
+                "name": "IMAGE_LEFT6",
+                "type": "png"
+            },
+            {
+                "file": "images/left5.png",
+                "name": "IMAGE_LEFT5",
+                "type": "png"
+            },
+            {
+                "file": "images/left4.png",
+                "name": "IMAGE_LEFT4",
+                "type": "png"
+            },
+            {
+                "file": "images/left3.png",
+                "name": "IMAGE_LEFT3",
+                "type": "png"
+            },
+            {
+                "file": "images/left2.png",
+                "name": "IMAGE_LEFT2",
+                "type": "png"
+            },
+            {
+                "file": "images/left1.png",
+                "name": "IMAGE_LEFT1",
+                "type": "png"
+            },
+            {
+                "file": "images/left0.png",
+                "name": "IMAGE_LEFT0",
+                "type": "png"
+            },
+            {
+                "file": "images/background.png",
+                "name": "IMAGE_BACKGROUND",
+                "type": "png"
+            },
+            {
+                "file": "images/clear_day.png",
+                "name": "IMAGE_CLEAR_DAY",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/clear_night.png",
+                "name": "IMAGE_CLEAR_NIGHT",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/cloudy.png",
+                "name": "IMAGE_CLOUDY",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/fog.png",
+                "name": "IMAGE_FOG",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/partly_cloudy_day.png",
+                "name": "IMAGE_PARTLY_CLOUDY_DAY",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/partly_cloudy_night.png",
+                "name": "IMAGE_PARTLY_CLOUDY_NIGHT",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/rain.png",
+                "name": "IMAGE_RAIN",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/snow.png",
+                "name": "IMAGE_SNOW",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/sleet.png",
+                "name": "IMAGE_SLEET",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/wind.png",
+                "name": "IMAGE_WIND",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/icon_battery.png",
+                "name": "IMAGE_BATTERY",
+                "type": "png"
+            },
+            {
+                "file": "images/icon_battery_charging.png",
+                "name": "IMAGE_BATTERY_CHARGING",
+                "type": "png"
+            }
+
+
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "Isometric",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "5011d707-5d48-4ea2-b3e7-5f103548dc19",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
