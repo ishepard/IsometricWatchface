@@ -3,6 +3,10 @@
 #define KEY_TEMPERATURE 0
 #define KEY_TEMP_UNIT 1
 #define KEY_CONDITIONS 2
+#define DISP_BATTERY 3
+#define DISP_TEMPERATURE_UNIT 4
+#define DISP_DATE 5
+#define DISP_WEATHER 6
 
 static Window *s_main_window;
 static BitmapLayer *s_background_layer;
@@ -170,7 +174,7 @@ static void main_window_load(Window *window) {
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(date_layer));
 
   // Set Date Layer
-  temperature_layer = text_layer_create(GRect(73, 130, 70, 40));
+  temperature_layer = text_layer_create(GRect(44, 130, 100, 40));
   text_layer_set_background_color(temperature_layer, GColorClear);
   text_layer_set_text_color(temperature_layer, GColorWhite);
   //text_layer_set_text(temperature_layer, "9°C");
@@ -314,21 +318,41 @@ static uint32_t get_bitmap_from_condition(int condition_code){
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   static char temperature_buffer[8];
-  int condition_code = 3200;  
-  
+  static char temperature_unit[20];
+  static char temperature[20];
+  int condition_code = 3200;
+  int display_weather = 1;
   Tuple *t = dict_read_first(iterator);
+  int temperature_tmp = 0;
 
   while(t != NULL) {
     // Which key was received?
     switch(t->key) {
     case KEY_TEMPERATURE:
-      snprintf(temperature_buffer, sizeof(temperature_buffer), "%d°C", (int)t->value->int32);
+      temperature_tmp = (int)t->value->int32;
+      snprintf(temperature_buffer, sizeof(temperature_buffer), "%d", temperature_tmp);
       break;
     case KEY_TEMP_UNIT:
       //snprintf(unit_buffer, sizeof(unit_buffer), "%s", t->value->cstring);
       break;
     case KEY_CONDITIONS:
       condition_code = (int)t->value->int32;
+      break;
+    case DISP_WEATHER:
+      display_weather = (int)t->value->int32;
+      break;
+    case DISP_DATE:
+      break;
+    case DISP_BATTERY:
+      break;
+    case DISP_TEMPERATURE_UNIT:
+      if (strcmp(t->value->cstring, "f") == 0){
+        snprintf(temperature_unit, sizeof(temperature_unit), "F");
+      } else if (strcmp(t->value->cstring, "c") == 0){
+        snprintf(temperature_unit, sizeof(temperature_unit), "C");
+      } else if (strcmp(t->value->cstring, "k") == 0){
+        snprintf(temperature_unit, sizeof(temperature_unit), "K");
+      }
       break;
     default:
       APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
@@ -337,15 +361,27 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
     t = dict_read_next(iterator);
   }
-  if (weather_img){
+
+  if (display_weather == 1){
+    if (weather_img){
+      gbitmap_destroy(weather_img);
+      weather_img = NULL;
+      bitmap_layer_set_bitmap(weather_layer, NULL);
+    }
+    weather_img = gbitmap_create_with_resource(get_bitmap_from_condition(condition_code));
+    bitmap_layer_set_bitmap(weather_layer, weather_img);
+    if (strcmp(temperature_unit, "K") == 0){
+      snprintf(temperature_buffer, sizeof(temperature_buffer), "%d", temperature_tmp + 273);
+    }
+    snprintf(temperature, sizeof(temperature), "%s°%s", temperature_buffer, temperature_unit);
+    text_layer_set_text(temperature_layer, temperature);
+  } else if (display_weather == 0){
     gbitmap_destroy(weather_img);
     weather_img = NULL;
     bitmap_layer_set_bitmap(weather_layer, NULL);
+    text_layer_set_text(temperature_layer, NULL);
   }
-  weather_img = gbitmap_create_with_resource(get_bitmap_from_condition(condition_code));
 
-  bitmap_layer_set_bitmap(weather_layer, weather_img);
-  text_layer_set_text(temperature_layer, temperature_buffer);
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
