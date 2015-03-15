@@ -13,6 +13,21 @@
     "resources": {
         "media": [
             {
+                "file": "fonts/Alpaca.ttf",
+                "name": "FONT_ALPACA_10",
+                "type": "font"
+            },
+            {
+                "file": "fonts/Alpaca.ttf",
+                "name": "FONT_ALPACA_16",
+                "type": "font"
+            },
+            {
+                "file": "fonts/Alpaca.ttf",
+                "name": "FONT_ALPACA_30",
+                "type": "font"
+            },
+            {
                 "file": "images/right9.png",
                 "name": "IMAGE_RIGHT9",
                 "type": "png"
@@ -118,63 +133,88 @@
                 "type": "png"
             },
             {
-                "file": "images/clear_day.png",
+                "file": "images/clear-day.png",
                 "name": "IMAGE_CLEAR_DAY",
-                "type": "png-trans"
+                "type": "png"
             },
             {
-                "file": "images/clear_night.png",
+                "file": "images/clear-night.png",
                 "name": "IMAGE_CLEAR_NIGHT",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "images/cloudy.png",
                 "name": "IMAGE_CLOUDY",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "images/fog.png",
                 "name": "IMAGE_FOG",
-                "type": "png-trans"
+                "type": "png"
             },
             {
-                "file": "images/partly_cloudy_day.png",
+                "file": "images/partly-cloudy-day.png",
                 "name": "IMAGE_PARTLY_CLOUDY_DAY",
-                "type": "png-trans"
+                "type": "png"
             },
             {
-                "file": "images/partly_cloudy_night.png",
+                "file": "images/partly-cloudy-night.png",
                 "name": "IMAGE_PARTLY_CLOUDY_NIGHT",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "images/rain.png",
                 "name": "IMAGE_RAIN",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "images/snow.png",
                 "name": "IMAGE_SNOW",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "images/sleet.png",
                 "name": "IMAGE_SLEET",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "images/wind.png",
                 "name": "IMAGE_WIND",
-                "type": "png-trans"
-            },
-            {
-                "file": "images/icon_battery.png",
-                "name": "IMAGE_BATTERY",
                 "type": "png"
             },
             {
                 "file": "images/icon_battery_charging.png",
                 "name": "IMAGE_BATTERY_CHARGING",
+                "type": "png"
+            },
+            {
+                "file": "images/icon_battery_100.png",
+                "name": "IMAGE_BATTERY_100",
+                "type": "png"
+            },
+            {
+                "file": "images/icon_battery_80.png",
+                "name": "IMAGE_BATTERY_80",
+                "type": "png"
+            },
+            {
+                "file": "images/icon_battery_60.png",
+                "name": "IMAGE_BATTERY_60",
+                "type": "png"
+            },
+            {
+                "file": "images/icon_battery_40.png",
+                "name": "IMAGE_BATTERY_40",
+                "type": "png"
+            },
+            {
+                "file": "images/icon_battery_20.png",
+                "name": "IMAGE_BATTERY_20",
+                "type": "png"
+            },
+            {
+                "file": "images/icon_battery_5.png",
+                "name": "IMAGE_BATTERY_5",
                 "type": "png"
             }
 

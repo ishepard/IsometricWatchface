@@ -11,6 +11,7 @@ function locationSuccess(pos) {
   var yahoo_get_city = encodeURIComponent("select countrycode, city, street from geo.placefinder where text=\"" + pos.coords.latitude + "," + pos.coords.longitude + "\" and gflags=\"R\"");
   // var yahoo_get_city = encodeURIComponent("select countrycode, city, street from geo.placefinder where text=\"40.7141667,-74.0063889 \" and gflags=\"R\"");
   var yahoo_city = "https://query.yahooapis.com/v1/public/yql?q=" + yahoo_get_city + "&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+  console.log(yahoo_city);
   request_city.open('GET', yahoo_city , false);
   request_city.send();
   if (request_city.readyState == 4) {

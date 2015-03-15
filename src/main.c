@@ -6,14 +6,14 @@
 
 static Window *s_main_window;
 static BitmapLayer *s_background_layer;
-static BitmapLayer *weather_layer_white;
-static BitmapLayer *weather_layer_black;
+static BitmapLayer *weather_layer;
 static BitmapLayer *battery_layer;
 static GBitmap *s_background_bitmap;
 static GBitmap *battery_bitmap;
-static GBitmap *weather_img_white;
-static GBitmap *weather_img_black;
+static GBitmap *weather_img;
 static TextLayer *battery_percentage;
+static TextLayer *date_layer;
+static TextLayer *temperature_layer;
 
 GBitmap *gbitmap_number[4];
 BitmapLayer *bitmap_layer[4];
@@ -56,10 +56,48 @@ const int rightNumbers[] = {
 };
 
 static uint32_t choose_png(char hour_n, side_t side){
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Choose png called with %c", hour_n);
+  //APP_LOG(APP_LOG_LEVEL_DEBUG, "Choose png called with %c", hour_n);
   return (side == LEFT) ? leftNumbers[(hour_n - '0')] : rightNumbers[(hour_n - '0')];
 }
 
+static void set_battery_bitmap(int percentage){
+  APP_LOG(APP_LOG_LEVEL_INFO, "percentage: %d", percentage);
+  if (battery_bitmap){
+    gbitmap_destroy(battery_bitmap);
+    battery_bitmap = NULL;
+    bitmap_layer_set_bitmap(battery_layer, NULL);
+  }
+  if (percentage == -1){
+    battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_CHARGING);
+  } else if (percentage > 80){
+    battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_100);
+  } else if (percentage > 60 && percentage <=80){
+    battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_80);
+  } else if (percentage > 40 && percentage <=60){
+    battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_60);
+  } else if (percentage > 20 && percentage <=40){
+    battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_40);
+  } else if (percentage > 5 && percentage <=20){
+    battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_20);
+  } else if (percentage <=5){
+    battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_5);
+  }
+  bitmap_layer_set_bitmap(battery_layer, battery_bitmap);
+}
+
+static void battery_handler(BatteryChargeState new_state) {
+  // Write to buffer and display
+  static char battery_buffer[32];
+  if (new_state.is_charging) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Battery is charging");
+    set_battery_bitmap(-1);
+  } else {
+    set_battery_bitmap(new_state.charge_percent);
+  }
+  APP_LOG(APP_LOG_LEVEL_INFO, "Current battery level: %d/100", new_state.charge_percent);
+  snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", new_state.charge_percent);
+  text_layer_set_text(battery_percentage, battery_buffer);
+}
 
 static void update_time() {
   // Get a tm structure
@@ -68,6 +106,7 @@ static void update_time() {
 
   // Create a long-lived buffer
   static char buffer[] = "00:00";
+  static char buffer_date[] = "00 aaa";
 
   // Write the current hours and minutes into the buffer
   if(clock_is_24h_style() == true) {
@@ -75,6 +114,9 @@ static void update_time() {
   } else {
     strftime(buffer, sizeof("00:00"), "%I:%M", tick_time);
   }
+
+  strftime(buffer_date, sizeof(buffer_date), "%d %a", tick_time);
+  text_layer_set_text(date_layer, buffer_date);
 
   for (int i = 0; i <= 3; i++){
     if (gbitmap_number[i]){
@@ -95,42 +137,57 @@ static void update_time() {
 }
 
 static void main_window_load(Window *window) { 
-  // Create GBitmap, then set to created BitmapLayer
+  // Set background
   s_background_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND);
   s_background_layer = bitmap_layer_create(GRect(0, 0, 144, 168));
   bitmap_layer_set_background_color(s_background_layer, GColorClear); 
   bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_background_layer));
 
-  battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY);
-  battery_layer = bitmap_layer_create(GRect(119, 5, 25, 10));
+  // Set battery default bitmap
+  battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_100);
+  battery_layer = bitmap_layer_create(GRect(119, 6, 25, 10));
   bitmap_layer_set_bitmap(battery_layer, battery_bitmap);
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(battery_layer));
 
-  // Create time TextLayer
-  battery_percentage = text_layer_create(GRect(88, 0, 30, 20));
+  // Set Battery Layer
+  battery_percentage = text_layer_create(GRect(80, 0, 40, 30));
   text_layer_set_background_color(battery_percentage, GColorClear);
   text_layer_set_text_color(battery_percentage, GColorWhite);
   text_layer_set_text(battery_percentage, "100%");
-
-  // Improve the layout to be more like a watchface
-  text_layer_set_font(battery_percentage, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  // text_layer_set_font(battery_percentage, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_font(battery_percentage, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ALPACA_16)));
   text_layer_set_text_alignment(battery_percentage, GTextAlignmentRight);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(battery_percentage));
 
-  
-  // weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WIND_WHITE);
-  weather_layer_white = bitmap_layer_create(GRect(15, 42, 55, 28));
-  // bitmap_layer_set_bitmap(weather_layer_white, weather_img_white);
-  bitmap_layer_set_compositing_mode(weather_layer_white, GCompOpOr); 
-  layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(weather_layer_white));
+  // Set Date Layer
+  date_layer = text_layer_create(GRect(0, 0, 70, 50));
+  text_layer_set_background_color(date_layer, GColorClear);
+  text_layer_set_text_color(date_layer, GColorWhite);
+  text_layer_set_text(date_layer, "00 aaa");
+  text_layer_set_font(date_layer, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ALPACA_16)));
+  text_layer_set_text_alignment(date_layer, GTextAlignmentLeft);
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(date_layer));
 
-  // weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WIND_BLACK);
-  weather_layer_black = bitmap_layer_create(GRect(15, 42, 55, 28));
-  // bitmap_layer_set_bitmap(weather_layer_black, weather_img_black);
-  bitmap_layer_set_compositing_mode(weather_layer_black, GCompOpClear); 
-  layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(weather_layer_black));
+  // Set Date Layer
+  temperature_layer = text_layer_create(GRect(73, 130, 70, 40));
+  text_layer_set_background_color(temperature_layer, GColorClear);
+  text_layer_set_text_color(temperature_layer, GColorWhite);
+  //text_layer_set_text(temperature_layer, "9°C");
+  text_layer_set_font(temperature_layer, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ALPACA_30)));
+  text_layer_set_text_alignment(temperature_layer, GTextAlignmentRight);
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(temperature_layer));
 
+  // Set weather bitmap
+  // weather_layer_white = bitmap_layer_create(GRect(15, 42, 55, 28));
+  // bitmap_layer_set_compositing_mode(weather_layer_white, GCompOpOr); 
+  // layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(weather_layer_white));
+  // weather_layer_black = bitmap_layer_create(GRect(15, 42, 55, 28));
+  // bitmap_layer_set_compositing_mode(weather_layer_black, GCompOpClear); 
+  // layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(weather_layer_black));
+  weather_layer = bitmap_layer_create(GRect(0, 127, 40, 40));
+  bitmap_layer_set_alignment(weather_layer, GAlignBottomLeft);
+  layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(weather_layer));
 
   for (int i = 0; i <= 3; i++){
     bitmap_layer[i] = bitmap_layer_create(GRect(position[2*i], position[2*i +1], 29, 63));
@@ -144,15 +201,23 @@ static void main_window_load(Window *window) {
 
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(bitmap_layer[i]));
   }
+  battery_handler(battery_state_service_peek());
   update_time();
 }
 
 static void main_window_unload(Window *window) {
-  bitmap_layer_destroy(s_background_layer);
   for (int i = 0; i <= 3; i++){
     bitmap_layer_destroy(bitmap_layer[i]);
     gbitmap_destroy(gbitmap_number[i]);
   }
+  bitmap_layer_destroy(s_background_layer);
+  bitmap_layer_destroy(weather_layer);
+  bitmap_layer_destroy(battery_layer);
+  gbitmap_destroy(s_background_bitmap);
+  gbitmap_destroy(battery_bitmap);
+  gbitmap_destroy(weather_img);
+  text_layer_destroy(date_layer);
+  text_layer_destroy(temperature_layer);
   text_layer_destroy(battery_percentage);
 }
 
@@ -171,88 +236,99 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     app_message_outbox_send();
   }
 }
-static void set_bitmap_from_condition(int condition_code){
-  if (weather_img_white || weather_img_black){
-    gbitmap_destroy(weather_img_white);
-    gbitmap_destroy(weather_img_black);
-    weather_img_white = NULL;
-    weather_img_black = NULL;
-    bitmap_layer_set_bitmap(weather_layer_white, NULL);
-    bitmap_layer_set_bitmap(weather_layer_black, NULL);
+static uint32_t get_bitmap_from_condition(int condition_code){
+  uint32_t resource_id = 0;
+  switch(condition_code){
+    case 30:
+      resource_id = RESOURCE_ID_IMAGE_PARTLY_CLOUDY_DAY;
+      break;
+    case 29:
+      resource_id = RESOURCE_ID_IMAGE_PARTLY_CLOUDY_NIGHT;
+      break;
+    case 26:
+    case 27:
+    case 28:
+    case 44:
+      resource_id = RESOURCE_ID_IMAGE_CLOUDY;
+      break;
+    case 31:
+    case 33:
+      resource_id = RESOURCE_ID_IMAGE_CLEAR_NIGHT;
+      break;
+    case 32:
+    case 34:
+    case 36:
+      resource_id = RESOURCE_ID_IMAGE_CLEAR_DAY;
+      break;
+    case 13:
+    case 15:
+    case 16:
+    case 25:
+    case 41:
+    case 42:
+    case 43:
+    case 46:
+      resource_id = RESOURCE_ID_IMAGE_SNOW;
+      break;
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+      resource_id = RESOURCE_ID_IMAGE_FOG;
+      break;
+    case 3:
+    case 4:
+    case 9:
+    case 11:
+    case 12:
+    case 40:
+    case 45:
+    case 47:
+      resource_id = RESOURCE_ID_IMAGE_RAIN;
+      break;
+    case 0:
+    case 1:
+    case 2:
+    case 23:
+    case 24:
+    case 37:
+    case 38:
+    case 39:
+      resource_id = RESOURCE_ID_IMAGE_WIND;
+      break;
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 10:
+    case 17:
+    case 18:
+    case 35:
+      resource_id = RESOURCE_ID_IMAGE_SLEET;
+      break;
+    default:
+      return 0;
   }
-  if (condition_code == 30){
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_PARTLY_CLOUDY_DAY_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_PARTLY_CLOUDY_DAY_BLACK);
-  } else if (condition_code == 29){
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_PARTLY_CLOUDY_NIGHT_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_PARTLY_CLOUDY_NIGHT_BLACK);
-  } else if ((condition_code >= 26 && condition_code <= 28) || condition_code == 44) {
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLOUDY_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLOUDY_BLACK);
-  } else if (condition_code == 31 || condition_code == 33) {
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLEAR_NIGHT_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLEAR_NIGHT_BLACK);
-  } else if (condition_code == 32 || condition_code == 34 || condition_code == 36) {
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLEAR_DAY_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLEAR_DAY_BLACK);
-  } else if (
-        (condition_code >= 41 && condition_code <= 43) || condition_code == 16 ||
-        condition_code == 13 || condition_code == 15 || condition_code == 25 || 
-        condition_code == 46
-      ){
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SNOW_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SNOW_BLACK);
-  } else if (condition_code >= 19 && condition_code <= 22){
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_FOG_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_FOG_BLACK);
-  } else if ( 
-        condition_code == 3 || condition_code == 4 || condition_code == 9 ||
-        condition_code == 11 || condition_code == 12 || condition_code == 40 ||
-        condition_code == 45 || condition_code == 47
-      ){
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_RAIN_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_RAIN_BLACK);
-  } else if (
-        condition_code == 23 || condition_code == 24 || (condition_code >= 0 && condition_code <= 2) ||
-        (condition_code >= 37 && condition_code <= 39)
-      ){
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WIND_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WIND_BLACK);
-  } else if ( 
-        (condition_code >= 5 && condition_code <= 8) || condition_code == 10 || 
-        (condition_code >= 14 && condition_code <= 17) || condition_code == 18 || 
-        condition_code == 35
-      ){
-      weather_img_white = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SLEET_WHITE);
-      weather_img_black = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SLEET_BLACK);
-  } else {
-    return;
-  }
-  bitmap_layer_set_bitmap(weather_layer_white, weather_img_white);
-  bitmap_layer_set_bitmap(weather_layer_black, weather_img_black);
+  return resource_id;
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
-  // Store incoming information
   static char temperature_buffer[8];
-  static char conditions_buffer[8];
-  static char unit_buffer[8];
   int condition_code = 3200;  
-  // Read first item
+  
   Tuple *t = dict_read_first(iterator);
 
   while(t != NULL) {
     // Which key was received?
     switch(t->key) {
     case KEY_TEMPERATURE:
-      // snprintf(temperature_buffer, sizeof(temperature_buffer), "%d", (int)t->value->int32);
+      snprintf(temperature_buffer, sizeof(temperature_buffer), "%d°C", (int)t->value->int32);
       break;
     case KEY_TEMP_UNIT:
       //snprintf(unit_buffer, sizeof(unit_buffer), "%s", t->value->cstring);
       break;
     case KEY_CONDITIONS:
       condition_code = (int)t->value->int32;
-      // snprintf(conditions_buffer, sizeof(conditions_buffer), "%d", (int)t->value->int32);
       break;
     default:
       APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
@@ -261,12 +337,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
     t = dict_read_next(iterator);
   }
-  set_bitmap_from_condition(condition_code);
-  
-  // Assemble full string and display
-  // snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s", temperature_buffer);
-  // text_layer_set_text(s_weather_layer, weather_layer_buffer);
-  
+  if (weather_img){
+    gbitmap_destroy(weather_img);
+    weather_img = NULL;
+    bitmap_layer_set_bitmap(weather_layer, NULL);
+  }
+  weather_img = gbitmap_create_with_resource(get_bitmap_from_condition(condition_code));
+
+  bitmap_layer_set_bitmap(weather_layer, weather_img);
+  text_layer_set_text(temperature_layer, temperature_buffer);
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
@@ -309,6 +388,7 @@ static void init() {
   // Open AppMessage
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
   
+  battery_state_service_subscribe(battery_handler);
 }
 
 static void deinit() {
