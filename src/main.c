@@ -1,15 +1,14 @@
 #include <pebble.h>
 
 #define KEY_TEMPERATURE 0
-#define KEY_TEMP_UNIT 1
-#define KEY_CONDITIONS 2
-#define DISP_BATTERY 3
-#define DISP_TEMPERATURE_UNIT 4
-#define DISP_DATE 5
-#define DISP_WEATHER 6
-#define KEY_DISP_DATE 7
-#define KEY_DISP_BATTERY 8
-#define KEY_DISP_WEATHER 9
+#define KEY_CONDITIONS 1
+#define DISP_BATTERY 2
+#define DISP_TEMPERATURE_UNIT 3
+#define DISP_DATE 4
+#define DISP_WEATHER 5
+#define KEY_DISP_DATE 6
+#define KEY_DISP_BATTERY 7
+#define KEY_DISP_WEATHER 8
 
 static Window *s_main_window;
 static BitmapLayer *s_background_layer;
@@ -67,12 +66,10 @@ const int rightNumbers[] = {
 };
 
 static uint32_t choose_png(char hour_n, side_t side){
-  //APP_LOG(APP_LOG_LEVEL_DEBUG, "Choose png called with %c", hour_n);
   return (side == LEFT) ? leftNumbers[(hour_n - '0')] : rightNumbers[(hour_n - '0')];
 }
 
 static void set_battery_bitmap(int percentage){
-  // APP_LOG(APP_LOG_LEVEL_INFO, "percentage: %d", percentage);
   if (percentage == -1){
     battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_CHARGING);
   } else if (percentage > 80){
@@ -96,6 +93,8 @@ static void battery_handler(BatteryChargeState new_state) {
     gbitmap_destroy(battery_bitmap);
     battery_bitmap = NULL;
     bitmap_layer_set_bitmap(battery_layer, NULL);
+  }
+  if (battery_percentage){
     text_layer_set_text(battery_percentage, NULL);
   }
   if (new_state.is_charging && (set_disp_battery == 1 || set_disp_battery == 3)) {
@@ -121,11 +120,12 @@ static void update_time() {
   // Get a tm structure
   time_t temp = time(NULL); 
   struct tm *tick_time = localtime(&temp);
-
-  // Create a long-lived buffer
   static char buffer[] = "00:00";
   static char buffer_date[30];
-  text_layer_set_text(date_layer, NULL);
+  
+  if (date_layer){
+    text_layer_set_text(date_layer, NULL);
+  }
 
   // Write the current hours and minutes into the buffer
   if(clock_is_24h_style() == true) {
@@ -144,7 +144,6 @@ static void update_time() {
     strftime(buffer_date, sizeof(buffer_date), "%x", tick_time);
     text_layer_set_text(date_layer, buffer_date);
   }
-  
 
   for (int i = 0; i <= 3; i++){
     if (gbitmap_number[i]){
@@ -338,14 +337,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *t = dict_read_first(iterator);
 
   while(t != NULL) {
-    // Which key was received?
     switch(t->key) {
     case KEY_TEMPERATURE:
       temperature_tmp = (int)t->value->int32;
       snprintf(temperature_buffer, sizeof(temperature_buffer), "%d", temperature_tmp);
-      break;
-    case KEY_TEMP_UNIT:
-      //snprintf(unit_buffer, sizeof(unit_buffer), "%s", t->value->cstring);
       break;
     case KEY_CONDITIONS:
       condition_code = (int)t->value->int32;
@@ -394,12 +389,18 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     t = dict_read_next(iterator);
   }
 
-  if (set_disp_weather == 1){
-    if (weather_img){
+  // Delete old values
+  if (weather_img){
       gbitmap_destroy(weather_img);
       weather_img = NULL;
       bitmap_layer_set_bitmap(weather_layer, NULL);
-    }
+  }
+  if (temperature_layer){
+    text_layer_set_text(temperature_layer, NULL);
+  }
+
+  // If you set the display weather true
+  if (set_disp_weather == 1){
     weather_img = gbitmap_create_with_resource(get_bitmap_from_condition(condition_code));
     bitmap_layer_set_bitmap(weather_layer, weather_img);
     if (strcmp(temperature_unit, "K") == 0){
@@ -407,13 +408,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     }
     snprintf(temperature, sizeof(temperature), "%s°%s", temperature_buffer, temperature_unit);
     text_layer_set_text(temperature_layer, temperature);
-  } else if (set_disp_weather == 0){
-    gbitmap_destroy(weather_img);
-    weather_img = NULL;
-    bitmap_layer_set_bitmap(weather_layer, NULL);
-    text_layer_set_text(temperature_layer, NULL);
   }
-
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
@@ -443,7 +438,6 @@ static void init() {
 
   window_set_background_color(s_main_window, GColorBlack);
   window_set_fullscreen(s_main_window, true);
-  // Show the Window on the watch, with animated=true
   window_stack_push(s_main_window, true);
   
   // Register with TickTimerService

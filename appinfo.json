@@ -1,12 +1,11 @@
 {
     "appKeys": {
         "KEY_TEMPERATURE": 0,
-        "KEY_TEMP_UNIT": 1,
-        "KEY_CONDITIONS": 2,
-        "DISP_BATTERY": 3,
-        "DISP_TEMPERATURE_UNIT": 4,
-        "DISP_DATE": 5,
-        "DISP_WEATHER": 6
+        "KEY_CONDITIONS": 1,
+        "DISP_BATTERY": 2,
+        "DISP_TEMPERATURE_UNIT": 3,
+        "DISP_DATE": 4,
+        "DISP_WEATHER": 5
     },
     "capabilities": [
         "location",
