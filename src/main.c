@@ -7,6 +7,9 @@
 #define DISP_TEMPERATURE_UNIT 4
 #define DISP_DATE 5
 #define DISP_WEATHER 6
+#define KEY_DISP_DATE 7
+#define KEY_DISP_BATTERY 8
+#define KEY_DISP_WEATHER 9
 
 static Window *s_main_window;
 static BitmapLayer *s_background_layer;
@@ -21,6 +24,9 @@ static TextLayer *temperature_layer;
 
 GBitmap *gbitmap_number[4];
 BitmapLayer *bitmap_layer[4];
+int set_disp_date;
+int set_disp_battery;
+int set_disp_weather;
 
 typedef enum { 
   LEFT, RIGHT 
@@ -32,6 +38,7 @@ const int position[8] = {
   73, 73,
   103, 58
 };
+
 
 const int leftNumbers[] = {
   RESOURCE_ID_IMAGE_LEFT0,
@@ -65,12 +72,7 @@ static uint32_t choose_png(char hour_n, side_t side){
 }
 
 static void set_battery_bitmap(int percentage){
-  APP_LOG(APP_LOG_LEVEL_INFO, "percentage: %d", percentage);
-  if (battery_bitmap){
-    gbitmap_destroy(battery_bitmap);
-    battery_bitmap = NULL;
-    bitmap_layer_set_bitmap(battery_layer, NULL);
-  }
+  // APP_LOG(APP_LOG_LEVEL_INFO, "percentage: %d", percentage);
   if (percentage == -1){
     battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATTERY_CHARGING);
   } else if (percentage > 80){
@@ -90,17 +92,29 @@ static void set_battery_bitmap(int percentage){
 }
 
 static void battery_handler(BatteryChargeState new_state) {
-  // Write to buffer and display
-  static char battery_buffer[32];
-  if (new_state.is_charging) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Battery is charging");
+  if (battery_bitmap){
+    gbitmap_destroy(battery_bitmap);
+    battery_bitmap = NULL;
+    bitmap_layer_set_bitmap(battery_layer, NULL);
+    text_layer_set_text(battery_percentage, NULL);
+  }
+  if (new_state.is_charging && (set_disp_battery == 1 || set_disp_battery == 3)) {
     set_battery_bitmap(-1);
-  } else {
+  } else if (set_disp_battery == 1 || set_disp_battery == 3){
     set_battery_bitmap(new_state.charge_percent);
   }
-  APP_LOG(APP_LOG_LEVEL_INFO, "Current battery level: %d/100", new_state.charge_percent);
-  snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", new_state.charge_percent);
-  text_layer_set_text(battery_percentage, battery_buffer);
+  
+  if (set_disp_battery == 2) {
+    layer_set_frame(text_layer_get_layer(battery_percentage), GRect(100, 0, 40, 30));
+    static char battery_buffer[32];
+    snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", new_state.charge_percent);
+    text_layer_set_text(battery_percentage, battery_buffer);
+  } else if (set_disp_battery == 3){
+    layer_set_frame(text_layer_get_layer(battery_percentage), GRect(80, 0, 40, 30));
+    static char battery_buffer[32];
+    snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", new_state.charge_percent);
+    text_layer_set_text(battery_percentage, battery_buffer);
+  }
 }
 
 static void update_time() {
@@ -110,7 +124,8 @@ static void update_time() {
 
   // Create a long-lived buffer
   static char buffer[] = "00:00";
-  static char buffer_date[] = "00 aaa";
+  static char buffer_date[30];
+  text_layer_set_text(date_layer, NULL);
 
   // Write the current hours and minutes into the buffer
   if(clock_is_24h_style() == true) {
@@ -119,8 +134,17 @@ static void update_time() {
     strftime(buffer, sizeof("00:00"), "%I:%M", tick_time);
   }
 
-  strftime(buffer_date, sizeof(buffer_date), "%d %a", tick_time);
-  text_layer_set_text(date_layer, buffer_date);
+  if (set_disp_date == 1){
+    strftime(buffer_date, sizeof(buffer_date), "%d %a", tick_time);
+    text_layer_set_text(date_layer, buffer_date);
+  } else if (set_disp_date == 2){
+    strftime(buffer_date, sizeof(buffer_date), "%d %b", tick_time);
+    text_layer_set_text(date_layer, buffer_date);
+  } else if (set_disp_date == 3){
+    strftime(buffer_date, sizeof(buffer_date), "%x", tick_time);
+    text_layer_set_text(date_layer, buffer_date);
+  }
+  
 
   for (int i = 0; i <= 3; i++){
     if (gbitmap_number[i]){
@@ -154,21 +178,17 @@ static void main_window_load(Window *window) {
   bitmap_layer_set_bitmap(battery_layer, battery_bitmap);
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(battery_layer));
 
-  // Set Battery Layer
   battery_percentage = text_layer_create(GRect(80, 0, 40, 30));
   text_layer_set_background_color(battery_percentage, GColorClear);
   text_layer_set_text_color(battery_percentage, GColorWhite);
-  text_layer_set_text(battery_percentage, "100%");
-  // text_layer_set_font(battery_percentage, fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_font(battery_percentage, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ALPACA_16)));
   text_layer_set_text_alignment(battery_percentage, GTextAlignmentRight);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(battery_percentage));
 
   // Set Date Layer
-  date_layer = text_layer_create(GRect(0, 0, 70, 50));
+  date_layer = text_layer_create(GRect(0, 0, 100, 30));
   text_layer_set_background_color(date_layer, GColorClear);
   text_layer_set_text_color(date_layer, GColorWhite);
-  text_layer_set_text(date_layer, "00 aaa");
   text_layer_set_font(date_layer, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ALPACA_16)));
   text_layer_set_text_alignment(date_layer, GTextAlignmentLeft);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(date_layer));
@@ -177,18 +197,11 @@ static void main_window_load(Window *window) {
   temperature_layer = text_layer_create(GRect(44, 130, 100, 40));
   text_layer_set_background_color(temperature_layer, GColorClear);
   text_layer_set_text_color(temperature_layer, GColorWhite);
-  //text_layer_set_text(temperature_layer, "9°C");
   text_layer_set_font(temperature_layer, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ALPACA_30)));
   text_layer_set_text_alignment(temperature_layer, GTextAlignmentRight);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(temperature_layer));
 
-  // Set weather bitmap
-  // weather_layer_white = bitmap_layer_create(GRect(15, 42, 55, 28));
-  // bitmap_layer_set_compositing_mode(weather_layer_white, GCompOpOr); 
-  // layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(weather_layer_white));
-  // weather_layer_black = bitmap_layer_create(GRect(15, 42, 55, 28));
-  // bitmap_layer_set_compositing_mode(weather_layer_black, GCompOpClear); 
-  // layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(weather_layer_black));
+  // Set weather layer
   weather_layer = bitmap_layer_create(GRect(0, 127, 40, 40));
   bitmap_layer_set_alignment(weather_layer, GAlignBottomLeft);
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(weather_layer));
@@ -321,9 +334,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   static char temperature_unit[20];
   static char temperature[20];
   int condition_code = 3200;
-  int display_weather = 1;
-  Tuple *t = dict_read_first(iterator);
   int temperature_tmp = 0;
+  Tuple *t = dict_read_first(iterator);
 
   while(t != NULL) {
     // Which key was received?
@@ -339,11 +351,31 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       condition_code = (int)t->value->int32;
       break;
     case DISP_WEATHER:
-      display_weather = (int)t->value->int32;
+      set_disp_weather = (int)t->value->int32;
       break;
     case DISP_DATE:
+      if (strcmp(t->value->cstring, "none") == 0){
+        set_disp_date = 0;
+      } else if (strcmp(t->value->cstring, "number_weekday") == 0){
+        set_disp_date = 1;
+      } else if (strcmp(t->value->cstring, "number_month") == 0){
+        set_disp_date = 2;
+      } else if (strcmp(t->value->cstring, "all_date") == 0){
+        set_disp_date = 3;
+      }
+      update_time();
       break;
     case DISP_BATTERY:
+      if (strcmp(t->value->cstring, "none") == 0){
+        set_disp_battery = 0;
+      } else if (strcmp(t->value->cstring, "icon") == 0){
+        set_disp_battery = 1;
+      } else if (strcmp(t->value->cstring, "percentage") == 0){
+        set_disp_battery = 2;
+      } else if (strcmp(t->value->cstring, "both") == 0){
+        set_disp_battery = 3;
+      }
+      battery_handler(battery_state_service_peek());
       break;
     case DISP_TEMPERATURE_UNIT:
       if (strcmp(t->value->cstring, "f") == 0){
@@ -362,7 +394,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     t = dict_read_next(iterator);
   }
 
-  if (display_weather == 1){
+  if (set_disp_weather == 1){
     if (weather_img){
       gbitmap_destroy(weather_img);
       weather_img = NULL;
@@ -375,7 +407,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     }
     snprintf(temperature, sizeof(temperature), "%s°%s", temperature_buffer, temperature_unit);
     text_layer_set_text(temperature_layer, temperature);
-  } else if (display_weather == 0){
+  } else if (set_disp_weather == 0){
     gbitmap_destroy(weather_img);
     weather_img = NULL;
     bitmap_layer_set_bitmap(weather_layer, NULL);
@@ -405,7 +437,9 @@ static void init() {
     .load = main_window_load,
     .unload = main_window_unload
   });
-
+  set_disp_date = persist_exists(KEY_DISP_DATE) ? persist_read_int(KEY_DISP_DATE) : 1;
+  set_disp_battery = persist_exists(KEY_DISP_BATTERY) ? persist_read_int(KEY_DISP_BATTERY) : 3;
+  set_disp_weather = persist_exists(KEY_DISP_WEATHER) ? persist_read_int(KEY_DISP_WEATHER) : 1;
 
   window_set_background_color(s_main_window, GColorBlack);
   window_set_fullscreen(s_main_window, true);
@@ -428,6 +462,9 @@ static void init() {
 }
 
 static void deinit() {
+  persist_write_int(KEY_DISP_BATTERY, set_disp_battery);
+  persist_write_int(KEY_DISP_WEATHER, set_disp_weather);
+  persist_write_int(KEY_DISP_DATE, set_disp_date);
   // Destroy Window
   window_destroy(s_main_window);
 }

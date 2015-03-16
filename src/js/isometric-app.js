@@ -1,8 +1,7 @@
 var battery = localStorage.getItem("battery");
 var date = localStorage.getItem("date");
 var temperature_unit = localStorage.getItem("temperature_unit");
-var weather = localStorage.getItem("weather");
-var output_form = {};
+var weather = JSON.parse(localStorage.getItem("weather"));
 var temperature;
 var conditions;
 
@@ -14,17 +13,13 @@ function locationSuccess(pos) {
   var city;
   var countrycode;
   var street;
-  console.log("lat:" + pos.coords.latitude + " long:" + pos.coords.longitude);
 
   var yahoo_get_city = encodeURIComponent("select countrycode, city, street from geo.placefinder where text=\"" + pos.coords.latitude + "," + pos.coords.longitude + "\" and gflags=\"R\"");
-  // var yahoo_get_city = encodeURIComponent("select countrycode, city, street from geo.placefinder where text=\"40.7141667,-74.0063889 \" and gflags=\"R\"");
   var yahoo_city = "https://query.yahooapis.com/v1/public/yql?q=" + yahoo_get_city + "&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
-  console.log(yahoo_city);
   request_city.open('GET', yahoo_city , false);
   request_city.send();
   if (request_city.readyState == 4) {
       if(request_city.status == 200) {
-        // console.log("request_city.RESPONSETEXT: " + request_city.responseText);
         response_city = JSON.parse(request_city.responseText);
         city = response_city.query.results.Result.city;
         countrycode = response_city.query.results.Result.countrycode;
@@ -34,9 +29,6 @@ function locationSuccess(pos) {
         console.log("Error");
       }
   }
-  console.log("city: " + city);
-  console.log("countrycode: " + countrycode);
-  console.log("street: " + street);
 
   if (weather){
     var unit = 'c';
@@ -55,8 +47,8 @@ function locationSuccess(pos) {
           var temp = response.query.results.channel.item.condition.temp;
           var cond = response.query.results.channel.item.condition.code;
 
-          console.log("Temperature= " + temp);
-          console.log("Conditions code= " + cond);
+          // console.log("Temperature= " + temp);
+          // console.log("Conditions code= " + cond);
           temperature = parseInt(temp);
           conditions = parseInt(cond);
           var dictionary = {
@@ -146,12 +138,13 @@ function set_form(){
   } else {
     output_form['weather'] = 'No';
   }
+  return output_form;
 }
 
 Pebble.addEventListener('showConfiguration', function(e) {
-  set_form();
-  console.log(encodeURIComponent(JSON.stringify(output_form)));
-  Pebble.openURL('http://www.davidespadini.it/form_isometric.html?' + encodeURIComponent(JSON.stringify(output_form)));
+  // console.log(encodeURIComponent(JSON.stringify(set_form())));
+  var result = set_form();
+  Pebble.openURL('http://www.davidespadini.it/form_isometric.html?' + encodeURIComponent(JSON.stringify(result)));
 });
 
 Pebble.addEventListener('webviewclosed',
@@ -195,7 +188,6 @@ Pebble.addEventListener('webviewclosed',
     getWeather();
     var dictionary = {
       "DISP_BATTERY": battery,
-      "DISP_TEMPERATURE_UNIT": temperature_unit,
       "DISP_DATE": date,
       "DISP_WEATHER": weather
       };
