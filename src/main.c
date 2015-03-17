@@ -239,7 +239,7 @@ static void main_window_unload(Window *window) {
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
-  // Get weather update every 30 minutes
+  // Get weather update every 15 minutes
   if(tick_time->tm_min % 15 == 0) {
     // Begin dictionary
     DictionaryIterator *iter;

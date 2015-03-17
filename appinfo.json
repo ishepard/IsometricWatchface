@@ -17,6 +17,12 @@
     "resources": {
         "media": [
             {
+                "file": "images/image_icon.png",
+                "menuIcon": true,
+                "name": "IMAGE_ICON",
+                "type": "png"
+            },
+            {
                 "file": "fonts/Alpaca.ttf",
                 "name": "FONT_ALPACA_10",
                 "type": "font"

@@ -57,15 +57,15 @@ function locationSuccess(pos) {
           "KEY_CONDITIONS": conditions,
           };
         
-        // Send to Pebble
-        Pebble.sendAppMessage(dictionary,
-          function(e) {
-            console.log("Weather info sent to Pebble successfully!");
-          },
-          function(e) {
-            console.log("Error sending weather info to Pebble!");
-          }
-        );
+          // Send to Pebble
+          Pebble.sendAppMessage(dictionary,
+            function(e) {
+              console.log("Weather info sent to Pebble successfully!");
+            },
+            function(e) {
+              console.log("Error sending weather info to Pebble!");
+            }
+          );
           
         } else {
           console.log("Error");
