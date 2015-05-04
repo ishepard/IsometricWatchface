@@ -208,7 +208,11 @@ static void main_window_load(Window *window) {
   for (int i = 0; i <= 3; i++){
     bitmap_layer[i] = bitmap_layer_create(GRect(position[2*i], position[2*i +1], 29, 63));
     bitmap_layer_set_background_color(bitmap_layer[i], GColorClear);
+#ifdef PBL_COLOR
+    bitmap_layer_set_compositing_mode(bitmap_layer[i], GCompOpSet);
+#else
     bitmap_layer_set_compositing_mode(bitmap_layer[i], GCompOpOr);
+#endif
     if (i <= 1){
       bitmap_layer_set_alignment(bitmap_layer[i], GAlignBottomRight);
     } else {

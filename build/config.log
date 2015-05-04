@@ -1,6 +1,6 @@
-# project  configured on Mon Mar 16 21:02:16 2015 by
+# project  configured on Mon Apr 13 12:59:49 2015 by
 # waf 1.7.11 (abi 98, python 20709f0 on darwin)
-# using /usr/local/Cellar/pebble-sdk/3.0-dp2/libexec/Pebble/waf configure build
+# using /usr/local/Cellar/pebble-sdk/3.0-dp7/libexec/Pebble/waf configure build
 #
 ----------------------------------------
 Setting top to
@@ -9,8 +9,8 @@ Setting top to
 Setting out to
 /Users/shepard/Documents/Developer/Pebble/isometric/build
 ----------------------------------------
-Found Pebble SDK for aplite in:
-/usr/local/Cellar/pebble-sdk/3.0-dp2/libexec/Pebble/aplite
+Found Pebble SDK for basalt in:
+/usr/local/Cellar/pebble-sdk/3.0-dp7/libexec/Pebble/basalt
 ----------------------------------------
 Checking for program gcc,cc
 arm-none-eabi-gcc
@@ -20,8 +20,8 @@ Checking for program ar
 arm-none-eabi-ar
 find program=['ar'] paths='' var='AR' -> 'arm-none-eabi-ar'
 ----------------------------------------
-Found Pebble SDK for basalt in:
-/usr/local/Cellar/pebble-sdk/3.0-dp2/libexec/Pebble/basalt
+Found Pebble SDK for aplite in:
+/usr/local/Cellar/pebble-sdk/3.0-dp7/libexec/Pebble/aplite
 ----------------------------------------
 Checking for program gcc,cc
 arm-none-eabi-gcc
